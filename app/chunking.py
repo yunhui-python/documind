@@ -45,12 +45,28 @@ def split_text(
     text: str,
     size: int = DEFAULT_SIZE,
     overlap: int = DEFAULT_OVERLAP,
+    min_size: int = 0,
 ) -> list[str]:
-    """把文本切成若干块，每块长度不超过 size，相邻块尽量重叠 overlap 个字符。"""
+    """把文本切成若干块。
+
+    每块长度不超过 size，相邻块尽量重叠 overlap 个字符；
+    最后一块若短于 min_size，则并入前一块（允许合并后超过 size）。
+
+    Args:
+        text: 待切分的原始文本。
+        size: 每块最大字符数，必须大于 0。
+        overlap: 相邻块重叠的字符数，必须 >= 0 且小于 size。
+        min_size: 尾块最小字符数，默认 0 表示不合并。
+
+    Raises:
+        ValueError: 参数不合法时抛出。
+    """
     if size <= 0:
         raise ValueError("size 必须大于 0")
     if overlap < 0 or overlap >= size:
         raise ValueError("overlap 必须 >= 0 且小于 size")
+    if min_size < 0:
+        raise ValueError("min_size 不能为负数")
 
     text = normalize(text)
     if not text:
@@ -85,4 +101,6 @@ def split_text(
 
     if buffer:
         chunks.append(buffer)
-    return chunks
+    if len(chunks) < 2 or len(chunks[-1]) >= min_size:
+        return chunks
+    return chunks[:-2] + [f"{chunks[-2]}\n\n{chunks[-1]}"]

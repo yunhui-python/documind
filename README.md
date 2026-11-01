@@ -1,5 +1,9 @@
 # DocuMind · 可评测的文档智能问答服务
 
+[![CI](https://github.com/yunhui-python/documind/actions/workflows/ci.yml/badge.svg)](https://github.com/yunhui-python/documind/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/python-3.12%2B-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+
 > 上传文档 → 自动切块建索引 → 用自然语言提问 → 得到**带引用来源**的回答。
 
 一个面向求职作品集的 Python 全栈项目：FastAPI 后端 + SQLite 存储 + 自实现向量检索 + 可插拔大模型 + 检索效果评测 + GitHub Actions CI。

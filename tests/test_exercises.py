@@ -57,7 +57,6 @@ def test_pdf_upload_is_routed_to_parser(client):
     assert response.status_code == 400
 
 
-@pytest.mark.xfail(strict=True, reason="Week 1 练习 C：检索接口支持 document_id 过滤")
 def test_search_can_filter_by_document(client):
     """练习 C：在指定文档范围内检索，结果不应混入其它文档。"""
     first = client.post(

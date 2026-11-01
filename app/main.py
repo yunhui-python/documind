@@ -34,6 +34,10 @@ class TextDocumentIn(BaseModel):
 class SearchIn(BaseModel):
     query: str = Field(min_length=1, max_length=2000, description="查询语句")
     top_k: int = Field(default=5, ge=1, le=20, description="返回条数")
+    document_id: int | None = Field(
+        default=None,
+        description="只在这篇文档内检索；文档不存在时返回空列表，不报错",
+    )
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -132,9 +136,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             repo,
             query_vector=embedder.embed_query(payload.query),
             top_k=payload.top_k,
+            document_id=payload.document_id,
         )
         return {
             "query": payload.query,
+            "document_id": payload.document_id,
             "count": len(hits),
             "hits": [hit.to_dict() for hit in hits],
         }

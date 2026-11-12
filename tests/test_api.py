@@ -49,7 +49,8 @@ def test_upload_file_endpoint(client):
 
 
 def test_upload_rejects_unsupported_suffix(client):
-    files = {"file": ("report.pdf", io.BytesIO(b"%PDF-1.4"), "application/pdf")}
+    # .pdf 在 Week 1 练习 B 之后已支持，这里换成真正不支持的格式
+    files = {"file": ("report.docx", io.BytesIO(b"PK\x03\x04"), "application/vnd.ms-word")}
     response = client.post("/api/documents", files=files)
     assert response.status_code == 415
 

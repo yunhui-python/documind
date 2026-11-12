@@ -20,10 +20,11 @@ from .chunking import split_text
 from .config import Settings, load_settings
 from .db import Repository
 from .embeddings import HashingEmbedder
+from .loaders import extract_pdf_text
 from .retrieval import pack, search
 
-# 允许上传的文本后缀。PDF/Word 解析是 Week 1 的练习题。
-ALLOWED_SUFFIXES = (".txt", ".md", ".markdown", ".log", ".csv")
+# 允许上传的后缀。文本类按 UTF-8 解码，PDF 走 loaders.extract_pdf_text。
+ALLOWED_SUFFIXES = (".txt", ".md", ".markdown", ".log", ".csv", ".pdf")
 
 
 class TextDocumentIn(BaseModel):
@@ -86,14 +87,19 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         "/api/documents/text",
         status_code=201,
         tags=["documents"],
-        summary="以 JSON 提交文档",
+        summary="上传文档",
     )
     def create_from_text(payload: TextDocumentIn) -> dict:
         return ingest(payload.name, payload.text)
 
-    @app.post("/api/documents", status_code=201, tags=["documents"], summary="上传文本文件")
+    @app.post(
+      "/api/documents", 
+      status_code=201, 
+      tags=["documents"], 
+      summary="上传文本文件(文本或PDF)",
+    )
     async def upload_document(
-        file: Annotated[UploadFile, File(description="UTF-8 编码的文本文件")],
+        file: Annotated[UploadFile, File(description="UTF-8 文本文件或PDF")],
     ) -> dict:
         filename = file.filename or "untitled.txt"
         if not filename.lower().endswith(ALLOWED_SUFFIXES):
@@ -107,15 +113,20 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             raise HTTPException(
                 status_code=413,
                 detail=f"文件超过 {settings.max_upload_bytes // 1024 // 1024}MB 限制",
-            )
-        try:
-            text = raw.decode("utf-8-sig")
-        except UnicodeDecodeError:
-            raise HTTPException(
-                status_code=400,
-                detail="文件不是 UTF-8 编码，请另存为 UTF-8 后重试",
-            ) from None
-
+            )   
+        if filename.lower().endswith(".pdf"):
+            try:
+                text = extract_pdf_text(raw)
+            except ValueError as exc:
+                raise HTTPException(status_code=400, detail=str(exc)) from None
+        else:
+            try:
+                text = raw.decode("utf-8-sig")
+            except UnicodeDecodeError:
+                raise HTTPException(
+                    status_code=400,
+                    detail="文件不是 UTF-8 编码，请另存为 UTF-8 后重试",
+                ) from None
         return ingest(filename, text)
 
     @app.get("/api/documents", tags=["documents"], summary="文档列表")

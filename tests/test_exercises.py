@@ -14,8 +14,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from app.chunking import split_text
 
 VECTOR_DOC = (
@@ -45,7 +43,6 @@ def test_min_size_keeps_adequate_tail():
     assert len(chunks) == 2
 
 
-@pytest.mark.xfail(strict=True, reason="Week 1 练习 B：上传 .pdf 时交给 PDF 解析器")
 def test_pdf_upload_is_routed_to_parser(client):
     """练习 B：.pdf 应该被接受然后走解析流程，而不是被 415 直接拒掉。
 
